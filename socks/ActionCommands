@@ -1,0 +1,31 @@
+[MarlXActionCommand].Action:
+	// 0xx ... Client-Messages
+
+	- 001 	Token-Identification
+		-> Body: Token
+	- 002 	Diskinfo Update
+
+	// 1xx ... (Client/Server)-Messages
+
+	- 100 	Information
+		-> Body: Message content
+	- 101 	Error
+		-> Body: Error message
+
+	- 106 	Store file (Header)
+		-> Body: File Information
+	- 107 	Request file
+		-> Body: File Information
+	- 108 	Respond file (Header)
+		-> Body: File Information
+
+	- 160 	Store file (Content)
+		-> Body: File Fragment
+	- 180 	Respond file (Content)
+		-> Body: File Fragment
+
+	// 2xx ... Server-Messages
+
+	- 200	Identify!
+	- 202	Update Diskinfo!
+	- 255	Close Socket!

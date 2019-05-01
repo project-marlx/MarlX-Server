@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 30">
+  <style>
+    text {
+      font-family: serif;
+      fill: #444;
+    }
+    .x {
+      font-size: 22.5px;
+      font-family: sans-serif;
+      fill: #FF6C77;
+    }
+
+    rect {
+      fill: #fff;
+      stroke: #444;
+      stroke-width: 1.5;
+    }
+  </style>
+
+  <rect x="0" y="0" width="70" height="30" />
+
+  <text x="12.5" y="20">Marl</text>
+  <text x="42.5" y="23.5" class="x">X</text>
+</svg>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="MarlX - The modern storage solution. Connect your devices, and use all of the available storage space. Never waste a single byte of storage anymore.">
+    <title>MarlX</title>
+
+    <link rel="stylesheet" type="text/css" href="/style/index.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+
+    <script defer src="/scripts/anime.min.js"></script>
+    <script defer src="/scripts/chart.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.8/lib/droppable.js"></script>
+    <script defer src="/scripts/crypto/crypto.js"></script>
+    <script defer src="/scripts/main.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="top-bar">
+            <div class="main-logo-container">
+                <img class="main-logo" src="/media/logo-text-dark.svg" alt="MarlX - Logo" />
+            </div>
+            <div class="top-bar-content">
+                <div id="user-profile">
+                    <i class="far fa-user-circle"></i>
+                    <p id="user-profile-username">-</p>
+                </div>
+                <div id="user-profile-dropdown" style="display: none; opacity: 0;">
+                    <div id="u-p-d-clients">
+                        <i class="fas fa-server"></i> Clients
+                    </div>
+                    <div id="u-p-d-settings">
+                        <i class="fas fa-cog"></i> Settings
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lower">
+            <div class="side-bar">
+                <div class="upload-button" id="upload-button">
+                    <i class="fas fa-plus"></i>
+                    <span>New</span>
+                </div>
+
+                <div class="side-bar-item" id="side-bar-item-root" onclick="loadDir('root')"
+                    ondrop="sideBarDropHandler(event, 'root')" ondragover="event.preventDefault()"
+                    style="padding-left: 15px;">
+                    <i class="fas fa-chevron-right" id="chevron-root" onclick="loadSidebar('root')"></i>
+                    <span class="side-bar-item-content"><i class="fas fa-home"></i></span>
+                </div>
+                <div class="side-bar-item-sub" parent="root">
+                </div>
+
+                <div class="side-bar-item" id="side-bar-item-trash" onclick="loadDir('trash')"
+                    ondrop="sideBarDropHandler(event, 'trash')" ondragover="event.preventDefault()" 
+                    style="padding-left: 15px;">
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="side-bar-item-content">Trash</span>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="dir-trace">
+                </div>
+                <div class="dir-content">
+                </div>
+            </div>
+        </div>
+
+        <a id="item-download-a" style="display: none;" href="about:blank"></a>
+
+        <table class="context-menu item-context-menu" style="transform: rotateX(0deg) skewY(45deg); opacity: 0;">
+            <tr class="context-menu-item" id="c-m-i-rename">
+                <td>
+                    <i class="fas fa-edit"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Rename</span>
+                </td>
+            </tr>
+            <tr class="context-menu-item-fluid">
+                <td colspan="2">
+                    <hr />
+                </td>
+            </tr>
+            <tr class="context-menu-item" id="c-m-i-download">
+                <td>
+                    <i class="fas fa-download"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Download</span>
+                </td>
+            </tr>
+            <tr class="context-menu-item" id="c-m-i-delete">
+                <td>
+                    <i class="fas fa-trash-alt"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Delete</span>
+                </td>
+            </tr>
+            <tr class="context-menu-item-fluid">
+                <td colspan="2">
+                    <hr />
+                </td>
+            </tr>
+            <tr class="context-menu-item" id="c-m-i-details">
+                <td>
+                    <i class="fas fa-info-circle"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Details</span>
+                </td>
+            </tr>
+        </table>
+
+        <table class="context-menu dir-context-menu" style="transform: rotateX(0deg) skewY(45deg); opacity: 0;">
+            <tr class="context-menu-item" id="c-m-d-upload-file">
+                <td>
+                    <i class="fas fa-file-upload"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Upload</span>
+                </td>
+            </tr>
+            <tr class="context-menu-item" id="c-m-d-create-dir">
+                <td>
+                    <i class="fas fa-plus"></i>
+                </td>
+                <td>
+                    <span class="context-menu-item-content">Create directory</span>
+                </td>
+            </tr>
+        </table>
+
+        <div class="item-info-popup-wrapper modal-wrapper">
+            <div class="item-info-popup modal" style="transform: translateY(-500px);">
+                <div class="item-info-popup-controls modal-controls">
+                    <i id="i-i-p-close" class="far fa-times-circle"></i>
+                </div>
+
+                <div class="item-info-popup-header">
+                    <h1 id="i-i-p-title">test.jpg</h1>
+                    <h3 id="i-i-p-creation-time">15.04.2019</h3>
+                </div>
+
+                <table class="item-info-popup-item-table">
+                    <tr>
+                        <td>
+                            Parent Directory:
+                        </td>
+                        <td id="i-i-p-parent-dir">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Size:
+                        </td>
+                        <td id="i-i-p-size">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            MIMEType:
+                        </td>
+                        <td id="i-i-p-mime-type"> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Clients:
+                        </td>
+                        <td id="i-i-p-clients">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="file-upload-container-wrapper modal-wrapper">
+            <div class="file-upload-container modal" style="transform: translateY(-500px);">
+                <div class="file-upload-controls modal-controls">
+                    <i id="f-u-close" class="far fa-times-circle"></i>
+                </div>
+
+                <input id="file-upload-hidden-in" style="display: none;" type="file" multiple />
+                <div class="file-upload-drop-area">
+                    <div class="file-upload-drop-here">
+                        Drop your file(s) here!
+                    </div>
+
+                    <div class="file-upload-drop-area-files">
+                    </div>
+                </div>
+
+                <div class="file-upload-upload-area">
+                    <progress id="file-upload-upload-progress" value="0" max="0"></progress>
+                    <p id="file-upload-upload-filename">...</p>
+                </div>
+
+                <input id="file-upload-submit" type="submit" value="Upload!" />
+            </div>
+        </div>
+
+        <div class="client-info-container-wrapper modal-wrapper">
+            <div class="client-info-container modal" style="transform: translateY(-500px);">
+                <div class="file-upload-controls modal-controls">
+                    <i id="c-i-close" class="far fa-times-circle"></i>
+                </div>
+
+                <div class="client-info-header">
+                    <h1>My clients</h1>
+                </div>
+
+                <div id="client-info-clients-out">
+                </div>
+
+                <div class="client-info-creation-div">
+                    <button id="client-info-creation-button">Generate!</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="file-preview-wrapper modal-wrapper">
+            <div class="file-preview-container modal" style="transform: translateY(-500px);">
+                <div class="file-preview-controls modal-controls">
+                    <i id="f-p-close" class="far fa-times-circle"></i>
+                </div>
+
+                <div class="file-preview-out">
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

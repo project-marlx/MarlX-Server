@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 250">
+  <style>
+    text {
+      font-size: 200px;
+      font-family: serif;
+      fill: #444;
+    }
+    .x {
+      font-size: 275px;
+      font-family: sans-serif;
+      fill: #FF6C77;
+    }
+  </style>
+
+  <text x="65" y="225" class="x">X</text>
+  <text x="5" y="190">M</text>
+</svg>

@@ -1,0 +1,39 @@
+{
+        "_id" : ObjectId("5c6ee0c19e45995fb48710c1"),
+        "token" : BinData(0,"asdfasdf"),
+        "username" : "Bernd",
+        "password" : "Berndson",
+        "clients" : [
+                BinData(0,"qwerqwer"),
+                BinData(0,"xyzaxyza")
+        ],
+        "files" : {
+                "8adb" : {
+                        "name" : "test.txt",
+                        "uniqueId" : BinData(0,"yxcvyxcv"),
+                        "cTokens" : [
+                                BinData(0,"qwerqwer")
+                        ],
+                        "isDir" : false,
+                        "dirContent" : [ ]
+                },
+                "ac8b" : {
+                        "name" : "some",
+                        "uniqueId" : BinData(0,"zuiozuio"),
+                        "cTokens" : [ ],
+                        "isDir" : true,
+                        "dirContent" : [
+                                BinData(0,"yxcvyxcv")
+						]
+				},
+				"root": {
+						"name" : "root",
+                        "uniqueId" : BinData(0,"00000000"),
+                        "cTokens" : [ ],
+                        "isDir" : true,
+                        "dirContent" : [
+                                BinData(0,"zuiozuio")
+						]
+				}
+		}
+}

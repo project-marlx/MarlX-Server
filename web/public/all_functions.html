@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Project MarlX</title>
+</head>
+
+<body>
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: lighter;
+        }
+
+        h1 {
+            text-align: center;
+            color: #FF6B6B;
+            font-family: fantasy;
+            font-weight: lighter;
+            font-size: 50px;
+            letter-spacing: 50px;
+        }
+
+        input,
+        button {
+            border: 1px solid #f2f2f2;
+            border-radius: 5px;
+            background-color: #fff;
+            padding: 5px;
+        }
+
+        input[type="submit"]:hover,
+        button:hover {
+            cursor: pointer;
+        }
+
+        input:focus,
+        button:focus {
+            outline: none;
+        }
+
+        section {
+            padding: 25px;
+            background-color: #FFF8F8;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .dir-content {
+            background-color: rgba(0, 0, 0, .2);
+            text-align: center;
+            padding: 7.5px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 2.5px;
+        }
+
+        .dir-content:hover {
+            cursor: pointer;
+            opacity: .8;
+        }
+
+        .dir-content::before {
+            color: #afa;
+            font-weight: bolder;
+        }
+
+        .marlx-file::before {
+            content: 'file:: ';
+        }
+
+        .marlx-dir::before {
+            content: 'dir:: ';
+        }
+    </style>
+
+    <h1>Project MarlX</h1>
+
+    <section>
+        <h2>Create user</h2>
+        <form id="creation-form">
+            <input id="reg_email_in" type="email" placeholder="Email" />
+            <input id="reg_uname_in" type="text" placeholder="Username" />
+            <input id="reg_pwd_in" type="password" placeholder="Password (hashed)" />
+            <input type="submit" value="Register" />
+        </form>
+    </section>
+
+    <section>
+        <h2>Login</h2>
+        <form id="login-form">
+            <input id="log_uname_in" type="text" placeholder="Username" />
+            <input id="log_pwd_in" type="password" placeholder="Password" />
+            <input type="submit" value="Login" />
+        </form>
+    </section>
+
+    <section>
+        <h2>Create Clients</h2>
+        <button id="client-create">Create!</button>
+    </section>
+
+    <section>
+        <h2>Client Info</h2>
+        <form id="client-info-form">
+            <input type="text" id="client_tkn_in" placeholder="Client Token (base64) ... " />
+            <input type="submit" value="Lookup!" />
+        </form>
+        <div id="client-info-out">
+        </div>
+    </section>
+
+    <section>
+        <h2>Cu-User</h2>
+        <div>
+            <b>Username:</b> <span id="cu-username"></span><br />
+            <b>Email:</b> <span id="cu-email"></span><br />
+        </div>
+    </section>
+
+    <section>
+        <h2>Files</h2>
+        <div id="files-down">
+        </div>
+        <div id="files-out">
+        </div>
+        <button id="files-refresh">Refresh!</button>
+    </section>
+
+    <section>
+        <h2>Directory Creation</h2>
+        <form id="dir-creation-form">
+            <input id="dir_name_in" type="text" placeholder="Name ... " />
+            <input type="submit" value="Make!" />
+        </form>
+    </section>
+
+    <section>
+        <h2>File-Up</h2>
+        <form id="file-up-form" enctype="multipart/form-data">
+            <input type="file" id="file-up-in" />
+        </form>
+    </section>
+
+    <script src="/scripts/crypto/crypto.js"></script>
+    <script>
+        var cu_dir = 'root';
+
+        function getCookie(key) {
+            let cks = decodeURIComponent(document.cookie);
+            let ck_ps = cks.split(';');
+
+            for (let ck of ck_ps) {
+                ck = ck.trim();
+                if (ck.startsWith(key + '=')) {
+                    return ck.split('=')[1];
+                }
+            }
+        }
+
+        function setCookie(key, value) {
+            document.cookie = `${key}=${value}`;
+        }
+
+        document.getElementById('creation-form').onsubmit = e => {
+            e.preventDefault();
+
+            let email = document.getElementById('reg_email_in').value,
+                uname = document.getElementById('reg_uname_in').value,
+                pwd = document.getElementById('reg_pwd_in').value;
+
+            if (email === "" || uname === "" || pwd === "")
+                return;
+
+            fetch('/api/sign-up', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        Email: email,
+                        Username: uname,
+                        PwdHash: pwd,
+                    }),
+                })
+                .then(res => res.json())
+                .then(res => {
+                    console.log(JSON.stringify(res));
+                    refreshUser();
+
+                    if (res.success) {
+                        let bts = marlx_crypto.stringToBytes(document.getElementById('reg_pwd_in').value);
+                        let key = marlx_crypto.stringToBytes(getCookie('marlx_tkn').substr(0, 32));
+                        marlx_crypto.aesctrEnc(bts, key).then(enc => {
+                            let hh = marlx_crypto.hexDigest(enc);
+                            setCookie('marlx_scr', hh);
+                        });
+
+                        document.getElementById('reg_email_in').value = '';
+                        document.getElementById('reg_uname_in').value = '';
+                        document.getElementById('reg_pwd_in').value = '';
+                    }
+                });
+        };
+
+        document.getElementById('login-form').onsubmit = e => {
+            e.preventDefault();
+
+            let uname = document.getElementById('log_uname_in').value,
+                pwd = document.getElementById('log_pwd_in').value;
+
+            if (uname === "" || pwd === "")
+                return;
+
+            fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        AuthType: 'username',
+                        Email: '',
+                        Username: uname,
+                        Password: pwd,
+                    }),
+                })
+                .then(res => res.json())
+                .then(res => {
+                    console.log(JSON.stringify(res));
+                    refreshUser();
+
+                    if (res.success) {
+                        let bts = marlx_crypto.stringToBytes(document.getElementById('log_pwd_in').value);
+                        let key = marlx_crypto.stringToBytes(getCookie('marlx_tkn').substr(0, 32));
+                        marlx_crypto.aesctrEnc(bts, key).then(enc => {
+                            let hh = marlx_crypto.hexDigest(enc);
+                            setCookie('marlx_scr', hh);
+                        });
+
+                        document.getElementById('log_uname_in').value = '';
+                        document.getElementById('log_pwd_in').value = '';
+                    }
+                });
+        };
+
+        function refreshUser() {
+            fetch('/api/creds')
+                .then(res => res.json())
+                .then(res => {
+                    if (!res.username || !res.email)
+                        return;
+
+                    document.getElementById('cu-email').innerHTML = res.email;
+                    document.getElementById('cu-username').innerHTML = res.username;
+                });
+        }
+
+        function parseDirContent(con, trgt) {
+            trgt.innerHTML = "";
+            con.forEach(f => {
+                let d = document.createElement('div');
+                d.classList.add('dir-content');
+
+                d.innerHTML = f.Name;
+                d.setAttribute('u_id', f.UniqueId.split('_')[1]);
+
+                if (f.IsDir) {
+                    d.classList.add('marlx-dir');
+
+                    d.onclick = () => {
+                        fetch(`/api/req/dir?d=${d.getAttribute('u_id')}`)
+                            .then(res => res.text())
+                            .then(res => {
+                                window.alert("Directory-Content: " + res);
+                            });
+                    };
+                } else {
+                    d.classList.add('marlx-file');
+
+                    d.onclick = () => {
+                        fetch(`/api/req/file?u=${d.getAttribute('u_id')}`)
+                            .then(res => res.arrayBuffer())
+                            .then(res => {
+                                let data = new Uint8Array(res);
+
+                                let bts = marlx_crypto.hexUndigest(getCookie('marlx_scr'));
+                                let k = marlx_crypto.stringToBytes(getCookie('marlx_tkn').substr(0,
+                                32));
+                                marlx_crypto.aesctrDec(bts, k).then(pwd => {
+                                    pwd = marlx_crypto.bytesToString(pwd);
+                                    let salt = f.Salt;
+
+                                    marlx_crypto.hash(pwd, salt).then(h => {
+                                        let key = marlx_crypto.stringToBytes(h.substr(
+                                            28));
+
+                                        marlx_crypto.aesctrDec(data, key).then(dec => {
+                                            let blb = new Blob([dec], {
+                                                type: f.MIMEType
+                                            });
+                                            let bur = window.URL
+                                                .createObjectURL(blb);
+
+                                            let a = document.createElement('a');
+                                            a.style.display = 'none';
+                                            document.body.appendChild(a);
+                                            a.href = bur;
+                                            a.download = f.Name;
+                                            a.click();
+
+                                            window.URL.revokeObjectURL(bur);
+                                        });
+                                    });
+                                });
+                            });
+                    };
+                }
+
+                trgt.appendChild(d);
+            });
+        }
+
+        document.getElementById('files-refresh').onclick = () => {
+            fetch(`/api/req/dir?d=${cu_dir}`)
+                .then(res => res.json())
+                .then(res => {
+                    parseDirContent(res, document.getElementById('files-out'));
+                });
+        };
+
+        window.onload = () => {
+            refreshUser();
+        };
+
+        document.getElementById('file-up-in').onchange = e => {
+            let t_file = document.getElementById('file-up-in').files[0];
+            let freader = new FileReader();
+            freader.onload = function () {
+                let i_a = new Uint8Array(freader.result);
+
+                let bts = marlx_crypto.hexUndigest(getCookie('marlx_scr'));
+                let k = marlx_crypto.stringToBytes(getCookie('marlx_tkn').substr(0, 32));
+                marlx_crypto.aesctrDec(bts, k).then(pwd => {
+                    pwd = marlx_crypto.bytesToString(pwd);
+                    let salt = marlx_crypto.genSalt();
+
+                    marlx_crypto.hash(pwd, salt).then(h => {
+                        let key = marlx_crypto.stringToBytes(h.substr(28));
+
+                        marlx_crypto.aesctrEnc(i_a, key).then(enc => {
+                            let fd = new FormData();
+                            let f = new File([enc.buffer], t_file.name, {
+                                type: t_file.type,
+                                lastModified: t_file.lastModified
+                            });
+
+                            fd.append('file', f, t_file.name);
+
+                            var xhr = new XMLHttpRequest();
+                            xhr.onreadystatechange = function () {
+                                if (this.readyState === 4 && this.status === 200) {
+                                    console.log(this.responseText);
+                                }
+                            };
+                            xhr.onprogress = function (e) {
+                                console.log(`${e.loaded}/${e.total}`);
+                            };
+                            xhr.open('POST',
+                                `/api/rec/file?parDir=root&salt=${salt}&osize=${t_file.size}&type=${t_file.type}`
+                                );
+                            xhr.send(fd);
+                        });
+                    });
+                });
+            };
+            freader.onprogress = function (e) {
+                console.log(`... ${e.loaded}/${e.total} ...`);
+            };
+            freader.onerror = function () {
+                console.log('some error ... ');
+            };
+            freader.readAsArrayBuffer(t_file);
+        };
+
+        document.getElementById('dir-creation-form').onsubmit = e => {
+            e.preventDefault();
+
+            let dir_name = document.getElementById('dir_name_in').value;
+            if (dir_name === "")
+                return;
+
+            fetch('/api/rec/dir', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        parentDir: 'root',
+                        dirName: dir_name,
+                    }),
+                })
+                .then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                });
+        };
+
+        document.getElementById('client-create').onclick = () => {
+            fetch('/api/clnts/new')
+                .then(res => res.text())
+                .then(res => {
+                    console.log(res);
+                });
+        };
+
+        function toHex(str) {
+            let res = "";
+            for (let i = 0; i < str.length; i++)
+                res += str.charCodeAt(i).toString(16);
+            return res;
+        }
+
+        document.getElementById('client-info-form').onsubmit = e => {
+            e.preventDefault();
+
+            let in_clnt_tkn = document.getElementById('client_tkn_in').value;
+            if (in_clnt_tkn === "")
+                return;
+
+            let clnt_tkn = toHex(atob(in_clnt_tkn));
+            console.log("Client-Token: " + clnt_tkn);
+
+            fetch(`/api/clnts/info?tkn=${clnt_tkn}`)
+                .then(res => res.text())
+                .then(res => {
+                    console.log(res);
+                });
+        };
+    </script>
+</body>
+
+</html>
